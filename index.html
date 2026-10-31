@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>306班扣分簿</title>
+<style>
+/* 布局：手机优先的单栏工具，顶部班级名，底部固定三栏导航；红笔=扣分，蓝笔=加分 */
+:root{color-scheme:light;
+  --paper:#f6f7f4; --card:#ffffff; --ink:#1f2a33; --muted:#66727c; --line:#dde2df;
+  --red:#c8322d; --red-soft:#fbe9e7; --blue:#1d5fa8; --blue-soft:#e6eef8;
+  --warn:#a86a00; --warn-soft:#fdf1d8; --accent:#24414f;
+  --display:"Songti SC","STSong","SimSun","Noto Serif CJK SC",serif;
+  --body:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#14191d; --card:#1c2328; --ink:#e4e9ec; --muted:#93a0a8; --line:#2c363d;
+  --red:#ef6b63; --red-soft:#3a2120; --blue:#6aa6e8; --blue-soft:#1b2a3b;
+  --warn:#e3a740; --warn-soft:#3a2e15; --accent:#9cc3d4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#14191d; --card:#1c2328; --ink:#e4e9ec; --muted:#93a0a8; --line:#2c363d;
+  --red:#ef6b63; --red-soft:#3a2120; --blue:#6aa6e8; --blue-soft:#1b2a3b;
+  --warn:#e3a740; --warn-soft:#3a2e15; --accent:#9cc3d4; color-scheme:dark}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 calc(76px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{padding-top:18px;display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-size:26px;margin:0;letter-spacing:.02em;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px}
+h2{font-size:13px;letter-spacing:.12em;color:var(--muted);margin:0 0 8px;font-weight:600}
+section{display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--paper);border-color:var(--accent);font-weight:600}
+button.big{width:100%;padding:16px;font-size:17px;display:flex;align-items:center;justify-content:center;gap:10px}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted);padding:6px 8px}
+button:disabled{opacity:.5;cursor:default}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;box-sizing:border-box;min-width:0}
+textarea{resize:vertical;min-height:84px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row>*{min-width:0}
+.grow{flex:1}
+.hint{color:var(--muted);font-size:13px;margin:0}
+.pts{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.neg{color:var(--red)} .pos{color:var(--blue)}
+.list{display:flex;flex-direction:column}
+.rec{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;padding:10px 0;border-bottom:1px solid var(--line);align-items:center}
+.rec:last-child{border-bottom:0}
+.rec .who{font-weight:600}
+.rec .what{color:var(--muted);font-size:13px;min-width:0;overflow-wrap:anywhere}
+.id{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;min-width:2.5em}
+.tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:99px;background:var(--paper);border:1px solid var(--line);margin-right:6px;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:var(--paper);font-size:14px}
+.chip.off{opacity:.4;text-decoration:line-through}
+.chip.unk{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.group{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.group .raw{font-size:13px;color:var(--muted)}
+.group select,.group input{background:var(--card)}
+.pnum{width:5.5em;flex:none}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px));z-index:5}
+.bar button{flex:1;max-width:214px;border:0;border-radius:0;background:transparent;padding:12px 0 14px;color:var(--muted);font-size:14px}
+.bar button[aria-current="true"]{color:var(--ink);font-weight:700;box-shadow:inset 0 3px 0 var(--red)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(72px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);
+  padding:10px 14px;border-radius:10px;display:flex;gap:12px;align-items:center;z-index:9;max-width:calc(100% - 32px)}
+.toast button{background:transparent;color:var(--paper);border-color:var(--paper);padding:4px 10px}
+.stat{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--line);align-items:center;cursor:pointer}
+.stat:last-child{border-bottom:0}
+.stat .brk{grid-column:2/4;font-size:12px;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;flex:1;padding:7px 10px;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--paper)}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:8;display:flex;align-items:flex-end;justify-content:center}
+.sheet .inner{background:var(--card);width:100%;max-width:640px;max-height:88%;overflow:auto;border-radius:16px 16px 0 0;
+  padding:16px max(16px,env(safe-area-inset-left,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:12px;box-sizing:border-box}
+.sum{display:flex;gap:18px;flex-wrap:wrap}
+.sum div{display:flex;flex-direction:column}
+.sum b{font-size:22px;font-variant-numeric:tabular-nums}
+.rule{display:grid;grid-template-columns:1fr 5em auto;gap:8px;align-items:center}
+.rule .kw{grid-column:1/2;font-size:13px}
+.rule .stk{grid-column:2/4;font-size:13px;padding:8px 4px}
+.strike{font-size:12px;padding:1px 7px;border-radius:99px;background:var(--warn-soft);color:var(--warn);white-space:nowrap}
+.strike.hot{background:var(--red);color:var(--card);font-weight:700}
+.stat.hot{box-shadow:inset 3px 0 0 var(--red);padding-left:8px}
+.empty{color:var(--muted);text-align:center;padding:18px 8px;font-size:14px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.login{min-height:70vh;display:flex;flex-direction:column;justify-content:center;gap:14px}
+.steps{margin:0;padding-left:1.3em;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:4px}
+.sync{font-size:12px;color:var(--muted)} .sync.err{color:var(--red)}
+</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px)}</style>
+</head><body>
+<div class="wrap" id="loginView" hidden>
+  <div class="login">
+    <h1>306班扣分簿</h1>
+    <p class="hint">这台设备第一次使用，需要输入访问密钥。只需输入一次，之后打开就能直接用。</p>
+    <input id="tokenInput" type="password" autocomplete="off" placeholder="粘贴访问密钥（github_pat_ 开头）">
+    <button class="primary big" type="button" id="btnLogin">进入</button>
+    <p class="hint" id="loginMsg"></p>
+    <p class="hint">密钥只保存在这台设备上，不会出现在网页里。没有密钥的人打开网址，看不到任何学生信息。</p>
+  </div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header>
+    <h1 id="title">306班扣分簿</h1>
+    <span class="sub" id="status">正在读取数据…</span>
+  </header>
+
+  <!-- 记录 -->
+  <div id="v-rec" class="wrap" style="gap:18px">
+    <section>
+      <h2>录入</h2>
+      <div class="panel">
+        <textarea id="txt" placeholder="打字、点键盘话筒说话，或粘贴从图片里提取的文字，例如：&#10;英语欠交：12 15 23&#10;陈致远、黄秋熠晚修讲话&#10;109宿舍被学校扣1分&#10;郑静怡带手机"></textarea>
+        <div class="row">
+          <button class="primary grow" id="btnParse" type="button">识别并确认</button>
+          <button id="btnPaste" type="button">粘贴</button>
+        </div>
+      </div>
+      <p class="hint"><b>拍照的单子怎么录：</b>在微信里长按图片选“提取文字”，或在相册里长按图片上的文字，全选复制，再点上面的“粘贴”。宿舍单、通报单、反思材料都可以。</p>
+    </section>
+
+    <section>
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0">今天的记录</h2><span class="sub" id="todayTotal"></span></div>
+      <div class="panel"><div class="list" id="todayList"></div></div>
+    </section>
+  </div>
+
+  <!-- 统计 -->
+  <div id="v-stat" class="wrap" hidden style="gap:14px">
+    <div class="seg" id="range">
+      <button type="button" data-r="week" aria-pressed="true">本周</button>
+      <button type="button" data-r="month" aria-pressed="false">本月</button>
+      <button type="button" data-r="all" aria-pressed="false">全部</button>
+    </div>
+    <div class="sum" id="sum"></div>
+    <div class="panel"><div class="list" id="statList"></div></div>
+    <button type="button" id="btnExport">导出全部记录（CSV，可用 Excel 打开）</button>
+    <p class="hint">在微信里打开时可能无法下载，请点右上角用浏览器打开。</p>
+  </div>
+
+  <!-- 设置 -->
+  <div id="v-set" class="wrap" hidden style="gap:18px">
+    <section>
+      <h2>班级名称</h2>
+      <input id="clsName" placeholder="例如：306班">
+    </section>
+    <section>
+      <h2>学生名单</h2>
+      <p class="hint">每行一个：学号 姓名 宿舍号（走读生写“走读”）。可以从 Excel 直接复制三列粘贴进来。</p>
+      <textarea id="roster" rows="8" placeholder="1 张三 B109&#10;2 李四 走读"></textarea>
+      <span class="sub" id="rosterCount"></span>
+    </section>
+    <section>
+      <h2>加扣分规则</h2>
+      <p class="hint">分值：扣分写负数，加分写正数。关键词用逗号分隔，用来识别各种写法。“违纪计次”决定这一项算不算学期违纪次数，满 3 次在统计页标红。“按学校分×”填 20，表示原文写“扣1分”时记 -20。</p>
+      <div id="rules" class="panel"></div>
+      <div class="row"><button type="button" id="btnAddRule">＋ 添加一项</button></div>
+    </section>
+    <button class="primary big" type="button" id="btnSaveCfg">保存设置</button>
+    <section>
+      <h2>这台设备</h2>
+      <button type="button" id="btnLogout">退出（清除这台设备上的密钥）</button>
+    </section>
+  </div>
+</div>
+
+<nav class="bar" id="bar" hidden>
+  <button type="button" data-v="rec" aria-current="true">记录</button>
+  <button type="button" data-v="stat" aria-current="false">统计</button>
+  <button type="button" data-v="set" aria-current="false">设置</button>
+</nav>
+
+<div class="sheet" id="confirm" hidden><div class="inner" id="confirmInner"></div></div>
+<div class="sheet" id="profile" hidden><div class="inner" id="profileInner"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ========== 存储：GitHub 私有仓库 ========== */
+const OWNER="mauriciachino40-beep", REPO="class306-data";
+const API=`https://api.github.com/repos/${OWNER}/${REPO}/contents/`;
+const LS={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},
+          set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},
+          del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
+let TOKEN=LS.get("c306_token")||"";
+const sha={config:null,records:null};
+const b64enc=str=>{const b=new TextEncoder().encode(str);let s="";for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)};
+const b64dec=b=>new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g,"")),c=>c.charCodeAt(0)));
+class HttpErr extends Error{constructor(st,m){super(m);this.status=st}}
+async function gh(path,opt={}){
+  const r=await fetch(API+path+(opt.method?"":"?t="+Date.now()),{cache:"no-store",...opt,
+    headers:{"Authorization":"Bearer "+TOKEN,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28",...(opt.headers||{})}});
+  if(!r.ok)throw new HttpErr(r.status,await r.text());
+  return r.json();
+}
+async function readFile(name,fallback){
+  try{const j=await gh(name+".json");sha[name]=j.sha;
+    const txt=j.content?b64dec(j.content):await (await fetch(j.download_url,{cache:"no-store"})).text();
+    return JSON.parse(txt)}
+  catch(e){if(e.status===404){sha[name]=null;return fallback}throw e}
+}
+async function writeFile(name,obj,msg){
+  const body={message:msg,content:b64enc(JSON.stringify(obj,null,1))};
+  if(sha[name])body.sha=sha[name];
+  const j=await gh(name+".json",{method:"PUT",body:JSON.stringify(body),headers:{"Content-Type":"application/json"}});
+  sha[name]=j.content.sha;
+}
+/* 改记录：先在最新数据上修改再写回；有人同时在改就重新读一次再试 */
+async function mutateRecords(fn,msg){
+  for(let tryN=0;tryN<3;tryN++){
+    try{fn(records);await writeFile("records",records,msg);cacheLocal();return}
+    catch(e){ if(e.status===409||e.status===422){records=await readFile("records",[]);continue} throw e }
+  }
+  throw new Error("conflict");
+}
+function cacheLocal(){LS.set("c306_cache",JSON.stringify({cfg,records}))}
+
+/* ========== 状态与工具 ========== */
+let cfg={cls:"",roster:[],rules:[]}; let records=[]; let range="week";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const norm=id=>String(id).trim().replace(/^0+(?=\d)/,"");
+const nameOf=id=>{const s=cfg.roster.find(x=>norm(x.id)===norm(id));return s?s.name:""};
+const inRoster=id=>cfg.roster.length===0||cfg.roster.some(x=>norm(x.id)===norm(id));
+const fmtPts=p=>(p>0?"+":"")+(Math.round(p*10)/10);
+const ptsCls=p=>p<0?"neg":"pos";
+const rulesNow=()=>cfg.rules;
+const strikeOf=cat=>Number((rulesNow().find(r=>r.name===cat)||{}).strike)||0;
+const strikesFor=sid=>records.filter(r=>norm(r.sid)===norm(sid)).reduce((s,r)=>s+strikeOf(r.cat),0);
+const strikeBadge=n=>n>0?`<span class="strike ${n>=3?"hot":""}">违纪${n}次${n>=3?"·报德育处":""}</span>`:"";
+function setSync(t,err){const el=$("#status");el.textContent=t;el.className="sub"+(err?" sync err":"")}
+function toast(msg,undo){const t=$("#toast");t.innerHTML=`<span>${esc(msg)}</span>`;
+  if(undo){const b=document.createElement("button");b.type="button";b.textContent="撤销";b.onclick=()=>{t.hidden=true;undo()};t.appendChild(b)}
+  t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,undo?6000:2600)}
+const errText=e=>e?.status===401?"密钥无效或已过期，请到“设置”退出后重新输入":
+  e?.status===404?"找不到数据仓库，请检查密钥是否授权了 class306-data":
+  (e instanceof TypeError)?"网络连不上 GitHub，请稍后再试":"保存失败，请稍后再试";
+
+/* ========== 导航与渲染 ========== */
+$("#bar").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#bar button").forEach(x=>x.setAttribute("aria-current",x===b?"true":"false"));
+  ["rec","stat","set"].forEach(v=>$("#v-"+v).hidden=v!==b.dataset.v);
+  if(b.dataset.v==="set")fillSettings(); window.scrollTo(0,0)};
+
+function recRow(r,showDate){
+  return `<div class="rec"><span class="id">${esc(/^\d+$/.test(r.sid)?r.sid:"")}</span>
+    <div style="min-width:0"><div class="who">${esc(r.name||nameOf(r.sid)||r.sid)}</div>
+    <div class="what"><span class="tag">${esc(r.cat)}</span>${esc(r.item||"")}${showDate?` · ${esc(r.date)}`:""}</div></div>
+    <div class="row" style="gap:4px;flex-wrap:nowrap"><span class="pts ${ptsCls(r.pts)}">${fmtPts(r.pts)}</span>
+    <button class="ghost" type="button" data-del="${esc(r.id)}" aria-label="删除这条">✕</button></div></div>`}
+function renderToday(){
+  const t=today(); const list=records.filter(r=>r.date===t).sort((a,b)=>b.ts-a.ts);
+  $("#todayList").innerHTML=list.length?list.map(r=>recRow(r)).join(""):
+    `<div class="empty">今天还没有记录。在上面输入“英语欠交：12 15”试试。</div>`;
+  const sum=list.reduce((s,r)=>s+r.pts,0);
+  $("#todayTotal").textContent=list.length?`${list.length} 条 · 合计 ${fmtPts(sum)}`:"";
+}
+function inRange(r){
+  if(range==="all")return true;
+  const d=new Date(r.date+"T00:00:00"), now=new Date();
+  if(range==="month")return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
+  const day=(now.getDay()+6)%7; return d>=new Date(now.getFullYear(),now.getMonth(),now.getDate()-day);
+}
+function renderStats(){
+  const list=records.filter(inRange); const by={};
+  cfg.roster.forEach(s=>by[norm(s.id)]={sid:s.id,name:s.name,total:0,n:0,cats:{}});
+  list.forEach(r=>{const k=norm(r.sid);by[k]=by[k]||{sid:r.sid,name:r.name||"",total:0,n:0,cats:{}};
+    by[k].total+=r.pts;by[k].n++;by[k].cats[r.cat]=(by[k].cats[r.cat]||0)+1});
+  const arr=Object.values(by).filter(s=>s.n>0).sort((a,b)=>a.total-b.total||b.n-a.n);
+  const ded=list.filter(r=>r.pts<0).reduce((s,r)=>s+r.pts,0), add=list.filter(r=>r.pts>0).reduce((s,r)=>s+r.pts,0);
+  const hot=Object.values(by).filter(s=>strikesFor(s.sid)>=3).length;
+  $("#sum").innerHTML=`<div><span class="sub">记录</span><b>${list.length}</b></div>
+    <div><span class="sub">扣分</span><b class="neg">${fmtPts(ded)}</b></div><div><span class="sub">加分</span><b class="pos">${fmtPts(add)}</b></div>
+    <div><span class="sub">涉及学生</span><b>${arr.length}</b></div>`+(hot?`<div><span class="sub">违纪满3次</span><b class="neg">${hot}</b></div>`:"");
+  $("#statList").innerHTML=arr.length?arr.map(s=>{const k=strikesFor(s.sid);return `<div class="stat ${k>=3?"hot":""}" data-sid="${esc(s.sid)}" tabindex="0" role="button">
+    <span class="id">${esc(/^\d+$/.test(s.sid)?s.sid:"")}</span><span style="font-weight:600">${esc(s.name||nameOf(s.sid)||s.sid)}</span>
+    <span class="pts ${ptsCls(s.total)}">${fmtPts(s.total)}</span>
+    <span class="brk">${strikeBadge(k)} ${Object.entries(s.cats).map(([c,n])=>`${esc(c)}×${n}`).join("　")}</span></div>`}).join("")
+    :`<div class="empty">这段时间没有记录。</div>`;
+}
+function render(){renderToday();renderStats();
+  $("#title").textContent=(cfg.cls||"")+"扣分簿";
+  document.title=$("#title").textContent;}
+
+function openProfile(sid){
+  const list=records.filter(r=>norm(r.sid)===norm(sid)).sort((a,b)=>b.ts-a.ts);
+  const total=list.reduce((s,r)=>s+r.pts,0); const nm=nameOf(sid)||list[0]?.name||sid;
+  $("#profileInner").innerHTML=`<div class="row" style="justify-content:space-between"><div>
+    <div style="font-family:var(--display);font-size:22px;font-weight:700">${esc(nm)}</div>
+    <span class="sub">${/^\d+$/.test(sid)?"学号 "+esc(sid)+" · ":""}共 ${list.length} 条 · 累计 <span class="pts ${ptsCls(total)}">${fmtPts(total)}</span> ${strikeBadge(strikesFor(sid))}</span></div>
+    <button type="button" id="closeProfile">关闭</button></div>
+    <div class="list">${list.map(r=>recRow(r,true)).join("")||'<div class="empty">没有记录</div>'}</div>`;
+  $("#profile").hidden=false; $("#closeProfile").onclick=()=>$("#profile").hidden=true;
+}
+$("#statList").onclick=e=>{const s=e.target.closest("[data-sid]");if(s)openProfile(s.dataset.sid)};
+$("#statList").onkeydown=e=>{if(e.key==="Enter"){const s=e.target.closest("[data-sid]");if(s)openProfile(s.dataset.sid)}};
+$("#profile").onclick=e=>{if(e.target.id==="profile")$("#profile").hidden=true};
+$("#range").onclick=e=>{const b=e.target.closest("button");if(!b)return;range=b.dataset.r;
+  document.querySelectorAll("#range button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));renderStats()};
+
+/* 删除 */
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-del]");if(!b)return;
+  const r=records.find(x=>x.id===b.dataset.del);if(!r)return; b.disabled=true;
+  try{await mutateRecords(rs=>{const i=rs.findIndex(x=>x.id===r.id);if(i>=0)rs.splice(i,1)},`删除 ${r.name||r.sid} ${r.cat}`);
+    render(); if(!$("#profile").hidden)openProfile(r.sid);
+    toast(`已删除：${r.name||r.sid} ${r.cat}`,async()=>{
+      try{await mutateRecords(rs=>{if(!rs.some(x=>x.id===r.id))rs.push(r)},`恢复 ${r.name||r.sid} ${r.cat}`);render()}catch(err){toast(errText(err))}});
+  }catch(err){b.disabled=false;toast(errText(err))}});
+
+/* ========== 本地识别（不联网） ========== */
+const kwList=r=>[r.name,...String(r.kw||"").split(/[,，、\s]+/)].filter(Boolean);
+function bestRule(text){
+  text=text+" "+text.replace(/[\d.\s]+/g,"");
+  let best=null,score=0;
+  for(const r of rulesNow())for(const k of kwList(r)){
+    if(text.toLowerCase().includes(k.toLowerCase())&&k.length>score){best=r;score=k.length}}
+  return best;
+}
+function dormMembers(text){
+  const out=[]; const ds=[...new Set(cfg.roster.map(s=>s.dorm).filter(d=>d&&d!=="走读"))];
+  for(const d of ds){const num=d.replace(/\D/g,"");
+    if(num&&new RegExp("(^|[^\\d])"+num+"(?!\\d)").test(text)&&/宿舍|寝室|舍|^[A-Za-z]?\d+$/.test(text+d))
+      cfg.roster.filter(s=>s.dorm===d).forEach(s=>out.push(s));}
+  return out;
+}
+function findPeople(text){
+  const found=new Map(); let rest=text;
+  // 姓名（长名字先匹配）
+  [...cfg.roster].sort((a,b)=>b.name.length-a.name.length).forEach(s=>{
+    if(s.name&&rest.includes(s.name)){found.set(norm(s.id),s);rest=rest.split(s.name).join(" ")}});
+  // 宿舍
+  if(/宿舍|寝室|舍/.test(rest)) dormMembers(rest).forEach(s=>found.set(norm(s.id),s));
+  // 去掉日期、时间、分数、宿舍号、节次后剩下的数字当学号
+  const cleaned=rest.replace(/\d{4}[年\-/.]\d{1,2}[月\-/.]\d{1,2}日?/g," ").replace(/\d{1,2}月\d{1,2}[日号]?/g," ")
+    .replace(/\d{1,2}[:：]\d{2}/g," ").replace(/[扣加减罚奖]\s*\d+(\.\d+)?\s*分/g," ").replace(/[-+]\s*\d+(\.\d+)?\s*分?/g," ")
+    .replace(/\d+(\.\d+)?\s*分/g," ").replace(/[A-Za-z]?\d+\s*(宿舍|寝室|舍|室)/g," ").replace(/第\s*\d+\s*[节次周名]/g," ")
+    .replace(/\d+\s*[次节周个条]/g," ");
+  (cleaned.match(/\d+/g)||[]).forEach(n=>{
+    if(cfg.roster.length){const s=cfg.roster.find(x=>norm(x.id)===norm(n));if(s)found.set(norm(s.id),s);else found.set(norm(n),{id:n,name:"",unknown:true})}
+    else found.set(norm(n),{id:n,name:""});
+  });
+  return [...found.values()].map(s=>({id:s.id,name:s.name||"",on:true,unknown:!!s.unknown}));
+}
+function explicitPoints(text){
+  const m=text.match(/扣\s*(\d+(?:\.\d+)?)\s*分/)||text.match(/-\s*(\d+(?:\.\d+)?)\s*分?/);
+  return m?Number(m[1]):null;
+}
+function makeGroup(raw,people,rule,itemText,reflection){
+  let pts=rule?Number(rule.pts)||0:-1;
+  const mult=rule?Number(rule.mult)||0:0;
+  const n=explicitPoints(raw);
+  if(rule&&mult>0&&n!=null)pts=-(n*mult);
+  return {raw,cat:rule?.name||"",pts,item:(itemText||"").trim()+(reflection?"（已交反思）":""),ids:people};
+}
+function parseAll(text){
+  text=text.replace(/\r/g,"").trim(); if(!text)return [];
+  // 反思材料：整篇看作一件事
+  if(/反思|检讨|保证书/.test(text)&&text.length>40){
+    let people=[];
+    const sig=text.match(/(?:姓名|反思人|检讨人|署名|学生)[:：\s]*([一-龥]{2,4})/);
+    if(sig){const s=cfg.roster.find(x=>x.name===sig[1]);if(s)people=[{id:s.id,name:s.name,on:true}]}
+    if(!people.length){ // 找文中出现的名字，取最后出现的一个（通常是署名）
+      let last=null,pos=-1; cfg.roster.forEach(s=>{const p=text.lastIndexOf(s.name);if(s.name&&p>pos){pos=p;last=s}});
+      if(last)people=[{id:last.id,name:last.name,on:true}]; }
+    const rule=bestRule(text);
+    return [makeGroup(text.slice(0,60)+(text.length>60?"…":""),people,rule,rule?rule.name:"",true)];
+  }
+  const groups=[]; let carry=null;
+  const segs=text.split(/\n+|[。；;]/).map(s=>s.trim()).filter(Boolean);
+  for(const seg of segs){
+    const people=findPeople(seg); const rule=bestRule(seg);
+    let label=seg; cfg.roster.forEach(s=>{if(s.name)label=label.split(s.name).join("")});
+    label=label.replace(/\d{4}[年\-/.]\d{1,2}[月\-/.]\d{1,2}日?/g,"").replace(/\d{1,2}月\d{1,2}[日号]?/g,"").replace(/\d{1,2}[:：]\d{2}/g,"")
+      .replace(/[A-Za-z]?\d+(\.\d+)?/g,"").replace(/同学/g,"").replace(/[\s：:,，、.。]+/g,"").trim();
+    if(!people.length){ if(rule){carry={rule,label}} continue }
+    const r=rule||carry?.rule||null;
+    groups.push(makeGroup(seg,people,r,rule?label:(carry?.label||label),false));
+  }
+  return groups;
+}
+$("#btnParse").onclick=()=>{
+  const g=parseAll($("#txt").value);
+  if(!g.length){toast("没找到学生。可以写学号、姓名或宿舍号，例如：英语欠交：12 15");return}
+  openConfirm(g,()=>{$("#txt").value=""});
+};
+$("#btnPaste").onclick=async()=>{
+  try{const t=await navigator.clipboard.readText();if(t){$("#txt").value=($("#txt").value?$("#txt").value+"\n":"")+t;toast("已粘贴，点“识别并确认”")}
+    else toast("剪贴板是空的")}
+  catch(e){$("#txt").focus();toast("请长按输入框，选择“粘贴”")}
+};
+
+/* ========== 确认面板 ========== */
+function isDup(x,cat){const k=norm(x.id||x.name);const t=Date.now()-3*864e5;
+  return records.some(r=>norm(r.sid)===k&&r.cat===cat&&r.ts>=t)}
+let pending=[];
+function openConfirm(groups,onDone){
+  pending=groups; const rs=rulesNow();
+  const draw=()=>{
+    const n=pending.reduce((s,g)=>s+(g.cat?g.ids.filter(x=>x.on).length:0),0);
+    $("#confirmInner").innerHTML=`<div class="row" style="justify-content:space-between"><b style="font-size:17px">确认后记录</b>
+      <button type="button" id="cCancel">取消</button></div>
+      <p class="hint">点学生可取消勾选。橙色是名单里对不上的学号，请核对。分值可以直接改。标“3天内已记过”的如果是同一件事（例如反思材料对应的违纪已经扣过），请取消勾选，避免重复扣分。</p>
+      ${pending.map((g,i)=>`<div class="group">
+        <div class="raw">原文：${esc(g.raw)}</div>
+        <div class="row"><select class="grow" data-gi="${i}" data-f="cat" aria-label="类别">
+          <option value="">— 选择类别 —</option>${rs.map(r=>`<option ${r.name===g.cat?"selected":""}>${esc(r.name)}</option>`).join("")}</select>
+          <input class="pnum" type="number" step="0.5" value="${g.pts}" data-gi="${i}" data-f="pts" aria-label="分值"></div>
+        <input value="${esc(g.item)}" placeholder="具体事项（可空），如：英语" data-gi="${i}" data-f="item">
+        <div class="chips">${g.ids.map((x,j)=>{const nm=nameOf(x.id)||x.name;const known=!x.unknown&&(!x.id||inRoster(x.id));const dup=g.cat&&isDup(x,g.cat);
+          return `<button type="button" class="chip ${x.on?"":"off"} ${known?"":"unk"}" data-gi="${i}" data-ci="${j}">
+          <span class="id">${esc(x.id||"?")}</span>${esc(nm||"名单无此号")}${dup?'<span style="color:var(--warn)">·3天内已记过</span>':""}</button>`}).join("")||'<span class="hint" style="color:var(--warn)">没认出学生，请取消后在原文里补上姓名或学号</span>'}</div>
+        ${g.cat?"":`<p class="hint" style="color:var(--warn)">请先选类别，这一组才会记录</p>`}
+      </div>`).join("")}
+      <button class="primary big" type="button" id="cSave" ${n?"":"disabled"}>记录 ${n} 条</button>`;
+    $("#cCancel").onclick=()=>{$("#confirm").hidden=true};
+    $("#cSave").onclick=()=>saveAll(onDone);
+  };
+  $("#confirmInner").onchange=e=>{const el=e.target;const g=pending[el.dataset.gi];if(!g)return;
+    if(el.dataset.f==="cat"){g.cat=el.value;const r=rs.find(x=>x.name===el.value);if(r){const mult=Number(r.mult)||0,n=explicitPoints(g.raw);g.pts=mult&&n!=null?-(n*mult):r.pts}draw()}
+    if(el.dataset.f==="pts")g.pts=Number(el.value)||0;
+    if(el.dataset.f==="item")g.item=el.value;};
+  $("#confirmInner").onclick=e=>{const c=e.target.closest(".chip");if(!c)return;
+    const x=pending[c.dataset.gi].ids[c.dataset.ci];x.on=!x.on;draw()};
+  draw(); $("#confirm").hidden=false;
+}
+async function saveAll(onDone){
+  const btn=$("#cSave"); btn.disabled=true; btn.innerHTML='<span class="spin"></span> 正在保存…';
+  const date=today(), made=[];
+  for(const g of pending){ if(!g.cat)continue;
+    for(const x of g.ids){ if(!x.on)continue;
+      made.push({id:uid(),date,ts:Date.now(),sid:x.id||x.name,name:nameOf(x.id)||x.name,cat:g.cat,item:g.item||"",pts:Number(g.pts)||0});}}
+  try{
+    await mutateRecords(rs=>{made.forEach(m=>{if(!rs.some(r=>r.id===m.id))rs.push(m)})},`记录 ${made.length} 条：${[...new Set(made.map(m=>m.cat))].join("、")}`);
+    $("#confirm").hidden=true; onDone&&onDone(); render();
+    toast(`已记录 ${made.length} 条`,async()=>{const ids=new Set(made.map(m=>m.id));
+      try{await mutateRecords(rs=>{for(let i=rs.length-1;i>=0;i--)if(ids.has(rs[i].id))rs.splice(i,1)},`撤销 ${made.length} 条`);render()}catch(err){toast(errText(err))}});
+  }catch(err){btn.disabled=false;btn.textContent="重试保存";toast(errText(err))}
+}
+
+/* ========== 设置 ========== */
+let editRules=[];
+function fillSettings(){
+  $("#clsName").value=cfg.cls||"";
+  $("#roster").value=cfg.roster.map(s=>[s.id,s.name,s.dorm||""].join(" ").trim()).join("\n");
+  $("#rosterCount").textContent=cfg.roster.length?`当前 ${cfg.roster.length} 人`:"";
+  drawRules(rulesNow().map(r=>({...r})));
+}
+function drawRules(rs){editRules=rs;
+  $("#rules").innerHTML=editRules.map((r,i)=>`<div class="rule">
+    <input value="${esc(r.name)}" data-ri="${i}" data-f="name" aria-label="类别名">
+    <input type="number" step="0.5" value="${r.pts}" data-ri="${i}" data-f="pts" aria-label="分值">
+    <button class="ghost" type="button" data-rdel="${i}" aria-label="删除这项">✕</button>
+    <input class="kw" value="${esc(r.kw||"")}" placeholder="关键词，逗号分隔" data-ri="${i}" data-f="kw" aria-label="关键词">
+    <select class="stk" data-ri="${i}" data-f="strike" aria-label="计入违纪次数">${[0,1,2].map(v=>`<option value="${v}" ${Number(r.strike||0)===v?"selected":""}>${v?"违纪计"+v+"次":"不计违纪"}</option>`).join("")}</select>
+    <label class="kw sub" style="display:flex;align-items:center;gap:6px">按学校分×<input type="number" min="0" value="${Number(r.mult)||0}" data-ri="${i}" data-f="mult" style="width:5em" aria-label="按学校扣分倍数"></label>
+    </div>`).join("")}
+$("#rules").oninput=$("#rules").onchange=e=>{const el=e.target;const r=editRules[el.dataset.ri];if(!r)return;const f=el.dataset.f;
+  r[f]=(f==="pts"||f==="strike"||f==="mult")?Number(el.value)||0:el.value};
+$("#rules").onclick=e=>{const b=e.target.closest("[data-rdel]");if(!b)return;editRules.splice(+b.dataset.rdel,1);drawRules(editRules)};
+$("#btnAddRule").onclick=()=>{editRules.push({name:"",pts:-5,kw:"",strike:0,mult:0});drawRules(editRules)};
+$("#btnSaveCfg").onclick=async()=>{
+  const btn=$("#btnSaveCfg"); btn.disabled=true;
+  const roster=$("#roster").value.split(/\n+/).map(l=>l.trim()).filter(Boolean).map(l=>{
+    const p=l.split(/[\s,，\t]+/).filter(Boolean); return {id:p[0],name:p[1]||"",dorm:p[2]||"走读"}});
+  const rules=editRules.filter(r=>String(r.name).trim()).map(r=>({name:String(r.name).trim(),pts:Number(r.pts)||0,kw:r.kw||"",strike:Number(r.strike)||0,mult:Number(r.mult)||0}));
+  const next={...cfg,cls:$("#clsName").value.trim(),roster,rules};
+  try{
+    try{await writeFile("config",next,"更新设置")}
+    catch(e){if(e.status===409||e.status===422){await readFile("config",cfg);await writeFile("config",next,"更新设置")}else throw e}
+    cfg=next;cacheLocal();render();toast("设置已保存");
+  }catch(err){toast(errText(err))}finally{btn.disabled=false}
+};
+$("#btnLogout").onclick=()=>{LS.del("c306_token");LS.del("c306_cache");location.reload()};
+
+/* ========== 导出 ========== */
+$("#btnExport").onclick=()=>{
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const rows=[["日期","学号","姓名","类别","具体事项","分值","违纪计次"]].concat(
+    [...records].sort((a,b)=>a.ts-b.ts).map(r=>[r.date,/^\d+$/.test(r.sid)?r.sid:"",r.name||nameOf(r.sid),r.cat,r.item,r.pts,strikeOf(r.cat)]));
+  const blob=new Blob(["﻿"+rows.map(r=>r.map(q).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`${cfg.cls||"班级"}扣分记录_${today()}.csv`;
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+};
+
+/* ========== 启动 ========== */
+async function loadAll(){
+  setSync("正在同步…");
+  try{
+    const [c,r]=await Promise.all([readFile("config",{cls:"",roster:[],rules:[]}),readFile("records",[])]);
+    cfg=Object.assign({cls:"",roster:[],rules:[]},c); records=Array.isArray(r)?r:[];
+    cacheLocal(); render();
+    setSync(`${cfg.roster.length} 名学生 · 共 ${records.length} 条 · 已同步`);
+    return true;
+  }catch(e){ setSync(errText(e),true); if(e.status===401)return false; return true }
+}
+async function start(){
+  $("#loginView").hidden=true; $("#app").hidden=false; $("#bar").hidden=false;
+  try{const c=JSON.parse(LS.get("c306_cache")||"null");if(c){cfg=c.cfg;records=c.records;render()}}catch(e){}
+  render(); await loadAll();
+}
+function showLogin(msg){$("#app").hidden=true;$("#bar").hidden=true;$("#loginView").hidden=false;$("#loginMsg").textContent=msg||""}
+$("#btnLogin").onclick=async()=>{
+  const t=$("#tokenInput").value.trim(); if(!t){$("#loginMsg").textContent="请先粘贴密钥";return}
+  TOKEN=t; $("#loginMsg").textContent="正在验证…";
+  try{await readFile("config",null);LS.set("c306_token",t);start()}
+  catch(e){TOKEN="";$("#loginMsg").textContent=e.status===401?"密钥不对，请重新复制":e.status===404?"密钥没有授权 class306-data 仓库，请检查":"连不上 GitHub，请检查网络后再试"}
+};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&TOKEN&&$("#confirm").hidden)loadAll()});
+TOKEN?start():showLogin();
+</script>
+
+</body></html>
